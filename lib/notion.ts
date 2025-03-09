@@ -22,17 +22,37 @@ export interface Card {
   imageUrl: string;
 }
 
-interface NotionProperty {
-  type: string;
-  url?: string | null;
-  title?: Array<{ plain_text: string }>;
-  rich_text?: Array<{ plain_text: string }>;
-  files?: Array<{ type: 'file' | 'external'; file?: { url: string }; external?: { url: string } }>;
-}
-
-interface NotionProperties {
-  [key: string]: NotionProperty;
-}
+type NotionProperties = {
+  title: {
+    type: 'title';
+    title: Array<{ plain_text: string }>;
+    id: string;
+  };
+  description: {
+    type: 'rich_text';
+    rich_text: Array<{ plain_text: string }>;
+    id: string;
+  };
+  author: {
+    type: 'rich_text';
+    rich_text: Array<{ plain_text: string }>;
+    id: string;
+  };
+  link: {
+    type: 'url';
+    url: string | null;
+    id: string;
+  };
+  image: {
+    type: 'files';
+    files: Array<{
+      type: 'file' | 'external';
+      file?: { url: string };
+      external?: { url: string };
+    }>;
+    id: string;
+  };
+};
 
 export async function getCards(): Promise<Card[]> {
   try {
@@ -45,31 +65,15 @@ export async function getCards(): Promise<Card[]> {
     return response.results
       .filter((page): page is PageObjectResponse => 'properties' in page)
       .map((page) => {
-        const properties = page.properties as NotionProperties;
-
-        const getTextContent = (prop: NotionProperty, type: 'title' | 'rich_text'): string => {
-          if (prop.type !== type || !Array.isArray(prop[type])) return '';
-          return prop[type][0]?.plain_text || '';
-        };
-
-        const getUrl = (prop: NotionProperty): string => {
-          if (prop.type !== 'url') return '';
-          return prop.url || '';
-        };
-
-        const getImageUrl = (prop: NotionProperty): string => {
-          if (prop.type !== 'files' || !Array.isArray(prop.files) || !prop.files[0]) return '';
-          const file = prop.files[0];
-          return (file.type === 'file' ? file.file?.url : file.external?.url) || '';
-        };
+        const properties = page.properties as unknown as NotionProperties;
 
         return {
           id: page.id,
-          title: getTextContent(properties.title, 'title'),
-          description: getTextContent(properties.description, 'rich_text'),
-          author: getTextContent(properties.author, 'rich_text'),
-          link: getUrl(properties.link),
-          imageUrl: getImageUrl(properties.image),
+          title: properties.title.title[0]?.plain_text || '',
+          description: properties.description.rich_text[0]?.plain_text || '',
+          author: properties.author.rich_text[0]?.plain_text || '',
+          link: properties.link.url || '',
+          imageUrl: properties.image.files[0]?.file?.url || properties.image.files[0]?.external?.url || '',
         };
       });
   } catch (error: unknown) {
