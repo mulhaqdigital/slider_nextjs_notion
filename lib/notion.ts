@@ -56,28 +56,92 @@ type NotionProperties = {
 
 export async function getCards(): Promise<Card[]> {
   try {
+    // Validate environment variables
     const databaseId = process.env.NOTION_DATABASE_ID;
+    if (!databaseId) {
+      throw new Error('NOTION_DATABASE_ID is undefined');
+    }
+
+    // Log the request
+    console.log('Fetching cards from Notion database:', databaseId);
     
     const response: QueryDatabaseResponse = await notion.databases.query({
-      database_id: databaseId!,
+      database_id: databaseId,
+      // Add sorting to ensure consistent order
+      sorts: [
+        {
+          property: 'title',
+          direction: 'ascending',
+        },
+      ],
+    }).catch((error) => {
+      console.error('Notion API Error:', {
+        message: error.message,
+        code: error.code,
+        status: error.status,
+      });
+      throw error;
+    });
+
+    // Log the response
+    console.log('Received response from Notion:', {
+      total_results: response.results.length,
     });
 
     return response.results
-      .filter((page): page is PageObjectResponse => 'properties' in page)
+      .filter((page): page is PageObjectResponse => {
+        const hasProperties = 'properties' in page;
+        if (!hasProperties) {
+          console.warn('Page missing properties:', page.id);
+        }
+        return hasProperties;
+      })
       .map((page) => {
-        const properties = page.properties as unknown as NotionProperties;
+        try {
+          const properties = page.properties as unknown as NotionProperties;
 
-        return {
-          id: page.id,
-          title: properties.title.title[0]?.plain_text || '',
-          description: properties.description.rich_text[0]?.plain_text || '',
-          author: properties.author.rich_text[0]?.plain_text || '',
-          link: properties.link.url || '',
-          imageUrl: properties.image.files[0]?.file?.url || properties.image.files[0]?.external?.url || '',
-        };
+          // Validate required properties
+          if (!properties.title || !properties.description || !properties.author) {
+            console.warn('Missing required properties for page:', page.id);
+          }
+
+          const card = {
+            id: page.id,
+            title: properties.title?.title[0]?.plain_text || 'Untitled',
+            description: properties.description?.rich_text[0]?.plain_text || 'No description',
+            author: properties.author?.rich_text[0]?.plain_text || 'Anonymous',
+            link: properties.link?.url || '',
+            imageUrl: properties.image?.files[0]?.file?.url || properties.image?.files[0]?.external?.url || '',
+          };
+
+          // Log successful card creation
+          console.log('Processed card:', { id: card.id, title: card.title });
+
+          return card;
+        } catch (error) {
+          console.error('Error processing page:', {
+            pageId: page.id,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+          // Return a default card instead of throwing
+          return {
+            id: page.id,
+            title: 'Error: Failed to load content',
+            description: 'There was an error loading this content',
+            author: 'System',
+            link: '',
+            imageUrl: '',
+          };
+        }
       });
-  } catch (error: unknown) {
-    console.error('Error fetching cards from Notion:', error);
+  } catch (error) {
+    console.error('Error in getCards:', {
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack,
+      } : 'Unknown error',
+    });
+    // Return empty array instead of throwing
     return [];
   }
 } 

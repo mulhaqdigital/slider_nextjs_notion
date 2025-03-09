@@ -63,7 +63,7 @@ export function CardSlider({ cards }: CardSliderProps) {
           // Individual card item with responsive width breakpoints
           <CarouselItem 
             key={card.id} 
-            className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3" // 1 card on mobile, 2 on tablet, 3 on desktop
+            className="pl-3 md:pl-5 md:basis-1/2 lg:basis-1/3" // 1 card on mobile, 2 on tablet, 3 on desktop
           >
             {/* Card link wrapper with hover and focus effects */}
             <Link 
