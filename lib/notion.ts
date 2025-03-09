@@ -1,4 +1,5 @@
 import { Client } from '@notionhq/client';
+import { PageObjectResponse, QueryDatabaseResponse } from '@notionhq/client/build/src/api-endpoints';
 
 if (!process.env.NOTION_TOKEN) {
   throw new Error('Missing NOTION_TOKEN environment variable');
@@ -21,64 +22,57 @@ export interface Card {
   imageUrl: string;
 }
 
+interface NotionProperty {
+  type: string;
+  url?: string | null;
+  title?: Array<{ plain_text: string }>;
+  rich_text?: Array<{ plain_text: string }>;
+  files?: Array<{ type: 'file' | 'external'; file?: { url: string }; external?: { url: string } }>;
+}
+
+interface NotionProperties {
+  [key: string]: NotionProperty;
+}
+
 export async function getCards(): Promise<Card[]> {
   try {
     const databaseId = process.env.NOTION_DATABASE_ID;
     
-    const response = await notion.databases.query({
+    const response: QueryDatabaseResponse = await notion.databases.query({
       database_id: databaseId!,
     });
 
-    return response.results.map((page: any) => {
-      // Safely access nested properties
-      const getProperty = (prop: string) => {
-        try {
-          switch (prop) {
-            case 'title':
-              return page.properties.title?.title[0]?.plain_text;
-            case 'description':
-              return page.properties.description?.rich_text[0]?.plain_text;
-            case 'author':
-              return page.properties.author?.rich_text[0]?.plain_text;
-            case 'link':
-              return page.properties.link?.url;
-            case 'image':
-              const imageProperty = page.properties.image;
-              if (!imageProperty) return '';
-              
-              // Handle different types of image attachments
-              if (imageProperty.type === 'files') {
-                const files = imageProperty.files;
-                if (files && files.length > 0) {
-                  const file = files[0];
-                  // Handle both external and uploaded files
-                  if (file.type === 'external') {
-                    return file.external?.url || '';
-                  } else if (file.type === 'file') {
-                    return file.file?.url || '';
-                  }
-                }
-              }
-              return '';
-            default:
-              return '';
-          }
-        } catch (error) {
-          console.error(`Error accessing ${prop} property:`, error);
-          return '';
-        }
-      };
+    return response.results
+      .filter((page): page is PageObjectResponse => 'properties' in page)
+      .map((page) => {
+        const properties = page.properties as NotionProperties;
 
-      return {
-        id: page.id,
-        title: getProperty('title'),
-        description: getProperty('description'),
-        author: getProperty('author'),
-        link: getProperty('link'),
-        imageUrl: getProperty('image'),
-      };
-    });
-  } catch (error) {
+        const getTextContent = (prop: NotionProperty, type: 'title' | 'rich_text'): string => {
+          if (prop.type !== type || !Array.isArray(prop[type])) return '';
+          return prop[type][0]?.plain_text || '';
+        };
+
+        const getUrl = (prop: NotionProperty): string => {
+          if (prop.type !== 'url') return '';
+          return prop.url || '';
+        };
+
+        const getImageUrl = (prop: NotionProperty): string => {
+          if (prop.type !== 'files' || !Array.isArray(prop.files) || !prop.files[0]) return '';
+          const file = prop.files[0];
+          return (file.type === 'file' ? file.file?.url : file.external?.url) || '';
+        };
+
+        return {
+          id: page.id,
+          title: getTextContent(properties.title, 'title'),
+          description: getTextContent(properties.description, 'rich_text'),
+          author: getTextContent(properties.author, 'rich_text'),
+          link: getUrl(properties.link),
+          imageUrl: getImageUrl(properties.image),
+        };
+      });
+  } catch (error: unknown) {
     console.error('Error fetching cards from Notion:', error);
     return [];
   }
