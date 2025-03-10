@@ -65,11 +65,11 @@
   height: 100%;
   transition: transform 0.2s ease-in-out;
   border-radius: 0.75rem;
-  padding: 0.5rem;
+  padding: 1rem;
 }
 
 .cardLink:hover {
-  transform: scale(1.02);
+  transform: scale(1.04);
 }
 
 .cardLink:focus {
@@ -170,8 +170,8 @@
   font-size: 0.875rem;
   color: #6b7280;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -230,7 +230,7 @@
 .navButton {
   position: static;
   transform: none;
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
 /* Button hover states */

@@ -9,7 +9,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen py-12">
       <div className="container mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-8">
+        <h1 className="text-2xl italic text-center mb-8">
           Powered by DeTA
         </h1>
         <CardSlider cards={cards} />
