@@ -18,9 +18,9 @@ export function InfiniteSlider({
     gap = 20,
     mobileGap = 12,
 }: InfiniteSliderProps) {
-    const [wrapperWidth, setWrapperWidth] = useState(0)
     const [itemsWidth, setItemsWidth] = useState(0)
     const [currentGap, setCurrentGap] = useState(gap)
+    const [currentSpeed, setCurrentSpeed] = useState(speed)
     
     const wrapperRef = useRef<HTMLDivElement>(null)
     const itemsRef = useRef<HTMLDivElement>(null)
@@ -29,7 +29,6 @@ export function InfiniteSlider({
     useEffect(() => {
         const updateMeasurements = () => {
             if (wrapperRef.current && itemsRef.current) {
-                setWrapperWidth(wrapperRef.current.offsetWidth)
                 setItemsWidth(itemsRef.current.offsetWidth)
                 
                 // Set gap based on screen width
@@ -53,7 +52,7 @@ export function InfiniteSlider({
     const x = useTransform(springX, (value: number) => `${value}px`)
 
     useAnimationFrame((time: number) => {
-        const timeOffset = (time * speed) / 5000
+        const timeOffset = (time * currentSpeed) / 5000
         const newX = -timeOffset % (itemsWidth + (currentGap * children.length))
         baseX.set(newX)
     })
@@ -67,7 +66,8 @@ export function InfiniteSlider({
                 ref={itemsRef}
                 style={{ x }}
                 className="flex"
-                whileHover={{ animationPlayState: 'paused' }}
+                onHoverStart={() => setCurrentSpeed(speedOnHover)}
+                onHoverEnd={() => setCurrentSpeed(speed)}
             >
                 {children.map((child, index) => (
                     <div key={index} style={{ marginRight: index === children.length - 1 ? 0 : currentGap }}>

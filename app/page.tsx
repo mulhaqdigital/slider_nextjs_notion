@@ -1,6 +1,5 @@
 import { getCards } from '@/lib/notion';
 import { CardSlider } from '@/components/card-slider';
-import CallToAction from '@/components/call-to-action';
 import LogoCloud from '@/components/logo-cloud'
 
 export const revalidate = 60; // Revalidate every minute

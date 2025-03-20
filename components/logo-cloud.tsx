@@ -1,53 +1,53 @@
 import { InfiniteSlider } from '@/components/motion-primitives/infinite-slider'
 import { ProgressiveBlur } from '@/components/motion-primitives/progressive-blur'
+import Image from 'next/image'
 
 export default function LogoCloud() {
     const logos = [
         {
             src: "https://html.tailus.io/blocks/customers/nvidia.svg",
             alt: "Nvidia Logo",
-            height: "20",
-            className: "h-4 "
+            height: 20,
+            className: "h-4"
         },
         
         {
             src: "https://cdn.worldvectorlogo.com/logos/nextjs-13.svg",
             alt: "nextjs Logo",
-            height: "15",
+            height: 15,
             className: "h-4"
         },
         {
             src: "https://html.tailus.io/blocks/customers/github.svg",
             alt: "GitHub Logo",
-            height: "16",
+            height: 16,
             className: "h-4"
         },
         {
             src: "https://svgmix.com/uploads/e11fe3-react.svg",
             alt: "react Logo",
-            height: "25",
+            height: 25,
             className: "h-6"
         },
         {
             src: "https://html.tailus.io/blocks/customers/vercel.svg",
             alt: "Vercel Logo",
-            height: "20",
+            height: 20,
             className: "h-4"
         },
         
         {
             src: "https://html.tailus.io/blocks/customers/laravel.svg",
             alt: "Laravel Logo",
-            height: "16",
+            height: 16,
             className: "h-3"
         },
         {
             src: "https://library.shadcnblocks.com/images/block/logos/shadcn-ui-wordmark.svg",
             alt: "shadcn Logo",
-            height: "16",
+            height: 16,
             className: "h-6"
         }
-        
     ];
 
     return (
@@ -73,12 +73,13 @@ export default function LogoCloud() {
                                     key={index} 
                                     className="flex items-center justify-center w-14 md:w-20 last:mr-10"
                                 >
-                                    <img
+                                    <Image
                                         className={`w-fit dark:invert ${logo.className}`}
                                         src={logo.src}
                                         alt={logo.alt}
                                         height={logo.height}
-                                        width="auto"
+                                        width={logo.height * 2}
+                                        priority={index < 3}
                                     />
                                 </div>
                             ))}
